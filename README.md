@@ -4,22 +4,21 @@ A graphical interface for scanning and managing ClamAV antivirus definitions.
 
 
 
-import tkinter as tk
-from tkinter import simpledialog, filedialog, messagebox,ttk
-import subprocess
-import threading
-import getpass
-import os
-import platform
-import signal
-import logging
-import pexpect
-import re
-import pathlib
-from PIL import Image, ImageTk
-
-	# Set up logging
-logging.basicConfig(level=logging.INFO, format=' %(asctime)s - %(levelname)s - %(message)s')
+ import tkinter as tk
+ from tkinter import simpledialog, filedialog, messagebox,ttk
+ import subprocess
+ import threading
+ import getpass
+ import os
+ import platform
+ import signal
+ import logging
+ import pexpect
+ import re
+ import pathlib
+ from PIL import Image, ImageTk
+ #Set up logging
+ logging.basicConfig(level=logging.INFO, format=' %(asctime)s - %(levelname)s - %(message)s')
 
 class ClamAVGUI:
     def __init__(self):
