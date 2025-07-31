@@ -9,10 +9,10 @@ import os
 import platform
 import signal
 import logging
-import pexpect
+#import pexpect
 import re
 import pathlib
-from PIL import Image, ImageTk
+#from PIL import Image, ImageTk
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format=' %(asctime)s - %(levelname)s - %(message)s')
@@ -39,7 +39,7 @@ class ClamAVGUI:
 
         # Load the image
         try:
-            self.image = tk.PhotoImage(file="~/clamav-gui/clam2.png")
+            self.image = tk.PhotoImage(file="~/clamavgui/clam2.png")
         except Exception as e:
             print(f"Error loading image: {e}")  # Handle potential image loading errors
             self.image = None # Set to None so we don't try to use it later
@@ -63,7 +63,7 @@ class ClamAVGUI:
         self.right_bottom_frame.pack(side=tk.BOTTOM, fill=tk.X, expand=False)
 
         # Create Buttons
-        self.update_button = tk.Button(self.left_frame, text="Update Database", command=self.update_db, height=1, width=15, bg='#f69e9e',borderwidth=0)
+        self.update_button = tk.Button(self.left_frame, text="Update Database", command=self.is_freshclam_installed, height=1, width=15, bg='#f69e9e',borderwidth=0)
         self.update_button.pack(side=tk.TOP, fill=tk.X, padx=20, pady=5)
 
         self.scan_directory_button = tk.Button(self.left_frame, text="Scan Directory", command=self.scan_directory, height=1, width=15, bg='#9cbbe5',borderwidth=0)
@@ -203,6 +203,19 @@ class ClamAVGUI:
         if hasattr(self, 'tooltip_window'):
             self.tooltip_window.destroy()
 
+    def is_freshclam_installed(self):
+        try:
+            command = "compgen -c | grep freshclam"  # String command
+            result1 = subprocess.run(command, shell=True, capture_output=True, text=True)
+            if  result1.stdout.strip():
+                self.update_db()
+            else:
+                self.update_output("ClamAV component 'freshclam' is missing.")
+                self.update_output("Please install 'freshclam' and restart the ClamAV GUI application.")
+                self.update_button.config(state='disabled')
+        except FileNotFoundError:
+            self.update_output("Error app cant handle 'compgen' or 'grep' ")  # In the case where 'compgen' or 'grep' are missing or whatever
+      
         
     def update_db(self):
         password = simpledialog.askstring("Enter Sudo Password", "Sudo password needed to update the ClamAV virus definitions.")
@@ -232,7 +245,8 @@ class ClamAVGUI:
         self.scan_in_progress = True
         self.cancel_button.config(state=tk.NORMAL)
         trash_directory = os.path.expanduser("~/.local/share/Trash/files")
-        clamav_directory = os.path.expanduser("~/clamav-gui")
+        clamav_directory = os.path.expanduser("~/clamavgui")
+        log_directory = os.path.expanduser("~/Documents")
         self.update_output("--------------------")
         self.update_output("Scanning directory..")
         directory = filedialog.askdirectory()
@@ -242,7 +256,7 @@ class ClamAVGUI:
             self.cancel_button.config(state=tk.DISABLED)
             return
         quoted_dir = f'"{directory}"'
-        log_option = f'--log="{clamav_directory}/clamav_log.txt"' if self.log_checkbox.get() else ""
+        log_option = f'--log="{log_directory}/clamav_log.txt"' if self.log_checkbox.get() else ""
         if self.quarantine_infected_checkbox.get():
             self.process = subprocess.Popen(f"clamscan -r {log_option} --move={trash_directory} {quoted_dir}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         elif self.delete_infected_checkbox.get():
@@ -287,7 +301,8 @@ class ClamAVGUI:
         self.update_output("--------------------")
         self.update_output("Scanning file...")
         trash_directory = os.path.expanduser("~/.local/share/Trash/files")
-        clamav_directory = os.path.expanduser("~/clamav-gui")
+        clamav_directory = os.path.expanduser("~/clamavgui")
+        log_directory = os.path.expanduser("~/Documents")
         file = filedialog.askopenfilename()
         if not file: # User cancelled
             self.scan_in_progress = False
@@ -295,7 +310,7 @@ class ClamAVGUI:
             self.cancel_button.config(state=tk.DISABLED)
             return
         quoted_file = f'"{file}"'
-        log_option = f'--log="{clamav_directory}/clamav_log.txt"' if self.log_checkbox.get() else ""
+        log_option = f'--log="{log_directory}/clamav_log.txt"' if self.log_checkbox.get() else ""
         if self.quarantine_infected_checkbox.get():self.process = subprocess.Popen(f"clamscan {log_option} --move={trash_directory} {quoted_file}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         elif self.delete_infected_checkbox.get():self.process = subprocess.Popen(f"clamscan {log_option} --remove {quoted_file}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         else:self.process = subprocess.Popen(f"clamscan {log_option} {quoted_file}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -345,7 +360,7 @@ class ClamAVGUI:
         if self.alarm_bell_checkbox.get():
             if re.search("FOUND", output):
                 self.window.after(100)
-                bell = os.path.expanduser("~/clamav-gui/bell.wav")
+                bell = os.path.expanduser("~/clamavgui/bell.wav")
                 self.output_window.tag_configure("red_alert", foreground="#FF0000")  # Define a tag
                 self.output_window.insert(tk.END, "ALERT !!! ", "red_alert") # Insert with the tag
                 self.update_output("")
@@ -391,7 +406,7 @@ class ClamAVGUI:
             self.update_output("Log is disable")
     
     def open_clamav_log(self):
-        log_file_path = os.path.expanduser("~/clamav-gui/clamav_log.txt")
+        log_file_path = os.path.expanduser("~/Documents/clamav_log.txt")
 
         if not os.path.exists(log_file_path):
             self.update_output("ClamAV log file not found!")
